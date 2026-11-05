@@ -7,16 +7,20 @@
 # It prints the values to store in GitHub (Settings > Secrets and variables > Actions).
 set -euo pipefail
 
-LOCATION="${LOCATION:-centralindia}"
+# Azure for Students only allows: indonesiacentral, indiasouthcentral,
+# uaenorth, malaysiawest, koreacentral (subscription policy)
+LOCATION="${LOCATION:-koreacentral}"
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-todo-cicd}"
 AKS_CLUSTER="${AKS_CLUSTER:-aks-todo}"
 # ACR names must be globally unique, lowercase letters/digits only
 ACR_NAME="${ACR_NAME:-todoacr$RANDOM$RANDOM}"
-NODE_SIZE="${NODE_SIZE:-Standard_B2s}"
+# 2 vCPU / 8 GB, fits the 6-vCPU Students quota
+NODE_SIZE="${NODE_SIZE:-Standard_B2s_v2}"
 
 echo ">> Registering resource providers (first use of a new subscription)"
 az provider register --namespace Microsoft.ContainerService --wait
 az provider register --namespace Microsoft.ContainerRegistry --wait
+az provider register --namespace Microsoft.Compute --wait
 az provider register --namespace Microsoft.Network --wait
 az provider register --namespace Microsoft.OperationalInsights --wait
 
