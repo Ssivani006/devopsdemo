@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-app
+  namespace: todo
+  labels:
+    app: todo-app
+spec:
+  replicas: 2                     # two pods -> no downtime during a rolling update
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: todo-app
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0           # never drop below 2 ready pods
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: todo-app
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: todo-app
+          # IMAGE_PLACEHOLDER is replaced by the pipeline (Ansible) with
+          # <acr>.azurecr.io/todo-app:<git-sha>
+          image: IMAGE_PLACEHOLDER
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: APP_VERSION
+              value: VERSION_PLACEHOLDER
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false

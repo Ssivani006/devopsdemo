@@ -1,0 +1,76 @@
+---
+# Deploys / updates the To-Do app on AKS.
+# Called by the pipeline:
+#   ansible-playbook -i ansible/inventory.ini ansible/deploy.yml \
+#     -e image=<acr>.azurecr.io/todo-app:<sha> -e app_version=<sha>
+- name: Deploy To-Do app to Azure Kubernetes Service
+  hosts: control
+  gather_facts: false
+
+  vars:
+    namespace: todo
+    manifest_dir: "{{ playbook_dir }}/../k8s"
+    image: "todoacr.azurecr.io/todo-app:latest"   # overridden with -e
+    app_version: "manual"                          # overridden with -e
+    rollout_timeout: 180
+
+  tasks:
+    - name: Ensure namespace exists
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ manifest_dir }}/namespace.yaml"
+
+    - name: Apply Deployment with the new image tag
+      kubernetes.core.k8s:
+        state: present
+        definition: >-
+          {{ lookup('file', manifest_dir + '/deployment.yaml')
+             | replace('IMAGE_PLACEHOLDER', image)
+             | replace('VERSION_PLACEHOLDER', app_version)
+             | from_yaml }}
+
+    - name: Apply Service (LoadBalancer)
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ manifest_dir }}/service.yaml"
+
+    - name: Wait for rolling update to finish
+      ansible.builtin.command: >
+        kubectl rollout status deployment/todo-app
+        -n {{ namespace }} --timeout={{ rollout_timeout }}s
+      changed_when: false
+
+    - name: Wait for the LoadBalancer public IP
+      kubernetes.core.k8s_info:
+        kind: Service
+        name: todo-app
+        namespace: "{{ namespace }}"
+      register: svc
+      until: svc.resources[0].status.loadBalancer.ingress is defined
+      retries: 30
+      delay: 10
+
+    - name: Remember the endpoint
+      ansible.builtin.set_fact:
+        endpoint: "http://{{ svc.resources[0].status.loadBalancer.ingress[0].ip }}"
+
+    - name: Smoke test - health endpoint must be UP
+      ansible.builtin.uri:
+        url: "{{ endpoint }}/actuator/health"
+        return_content: true
+      register: health
+      until: health.status == 200 and health.json.status == 'UP'
+      retries: 12
+      delay: 10
+
+    - name: Smoke test - running version must be the one just deployed
+      ansible.builtin.uri:
+        url: "{{ endpoint }}/api/info"
+      register: info
+      until: info.json.version == app_version
+      retries: 12
+      delay: 5
+
+    - name: Show result
+      ansible.builtin.debug:
+        msg: "Application {{ info.json.version }} is live at {{ endpoint }}"

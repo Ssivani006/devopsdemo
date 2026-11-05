@@ -1,0 +1,4 @@
+# Keep the Docker build context small and free of secrets.
+# Everything is excluded except the packaged jar.
+*
+!target/todo-app.jar
