@@ -8,11 +8,12 @@ LABEL org.opencontainers.image.title="todo-app" \
 
 WORKDIR /app
 
-# Run as a non-root user (security best practice)
-RUN addgroup -S app && adduser -S app -G app
+# Run as a non-root user (security best practice).
+# A numeric UID is required so Kubernetes "runAsNonRoot" can verify it.
+RUN addgroup -S -g 10001 app && adduser -S -u 10001 -G app app
 
 COPY target/todo-app.jar app.jar
-USER app
+USER 10001
 
 EXPOSE 8080
 ENV APP_VERSION=docker-local

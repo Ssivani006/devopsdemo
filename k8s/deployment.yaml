@@ -23,6 +23,7 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+        runAsUser: 10001          # same UID as the Dockerfile's USER
       containers:
         - name: todo-app
           # IMAGE_PLACEHOLDER is replaced by the pipeline (Ansible) with
