@@ -44,8 +44,9 @@ docker build -t todo-app:local . && docker run -p 8080:8080 todo-app:local
 1. Azure portal → Cloud Shell (Bash) → upload `infra/azure-setup.sh` → `bash azure-setup.sh`
    (~10 min). It prints three variables and one secret.
 2. GitHub repo → Settings → Secrets and variables → Actions:
-   * Variables: `RESOURCE_GROUP`, `AKS_CLUSTER`, `ACR_NAME`
-   * Secret: `AZURE_CREDENTIALS` (the JSON)
+   * Variables: `RESOURCE_GROUP`, `AKS_CLUSTER`, `ACR_NAME`, `AZURE_CLIENT_ID`,
+     `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`
+   * Secret: `AZURE_CLIENT_SECRET`
 3. Push to `main` → Actions tab shows the pipeline running.
 
 ## Change-and-redeploy demo (for the viva)

@@ -46,19 +46,22 @@ SP_JSON=$(az ad sp create-for-rbac \
   --role Contributor \
   --scopes "/subscriptions/$SUB_ID/resourceGroups/$RESOURCE_GROUP" \
   --json-auth)
+field() { echo "$SP_JSON" | python3 -c "import sys,json;print(json.load(sys.stdin)['$1'])"; }
 
 cat <<EOF
 
 ==================================================================
  Add these in GitHub -> repo -> Settings -> Secrets and variables -> Actions
 
- Variables tab:
-   RESOURCE_GROUP = $RESOURCE_GROUP
-   AKS_CLUSTER    = $AKS_CLUSTER
-   ACR_NAME       = $ACR_NAME
+ Variables tab (not secret):
+   RESOURCE_GROUP        = $RESOURCE_GROUP
+   AKS_CLUSTER           = $AKS_CLUSTER
+   ACR_NAME              = $ACR_NAME
+   AZURE_CLIENT_ID       = $(field clientId)
+   AZURE_TENANT_ID       = $(field tenantId)
+   AZURE_SUBSCRIPTION_ID = $(field subscriptionId)
 
  Secrets tab:
-   AZURE_CREDENTIALS = (the JSON below, including the braces)
+   AZURE_CLIENT_SECRET   = $(field clientSecret)
 ==================================================================
-$SP_JSON
 EOF

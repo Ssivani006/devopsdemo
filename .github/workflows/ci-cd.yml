@@ -80,10 +80,23 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "image=${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${VERSION}" >> "$GITHUB_OUTPUT"
 
+      - name: Check Azure settings are configured
+        env:
+          CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: |
+          missing=0
+          for v in CLIENT_ID TENANT_ID SUBSCRIPTION_ID CLIENT_SECRET RESOURCE_GROUP AKS_CLUSTER ACR_NAME; do
+            if [ -z "${!v}" ]; then echo "::error::$v is empty - add it in Settings > Secrets and variables > Actions"; missing=1; fi
+          done
+          exit $missing
+
       - name: Azure login (service principal)
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: '{"clientId":"${{ vars.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ vars.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ vars.AZURE_TENANT_ID }}"}'
 
       - name: Log in to Azure Container Registry
         run: az acr login --name "$ACR_NAME"
@@ -110,10 +123,23 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Check Azure settings are configured
+        env:
+          CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: |
+          missing=0
+          for v in CLIENT_ID TENANT_ID SUBSCRIPTION_ID CLIENT_SECRET RESOURCE_GROUP AKS_CLUSTER ACR_NAME; do
+            if [ -z "${!v}" ]; then echo "::error::$v is empty - add it in Settings > Secrets and variables > Actions"; missing=1; fi
+          done
+          exit $missing
+
       - name: Azure login (service principal)
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: '{"clientId":"${{ vars.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ vars.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ vars.AZURE_TENANT_ID }}"}'
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v4
