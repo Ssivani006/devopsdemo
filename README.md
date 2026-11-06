@@ -8,7 +8,7 @@ A very simple Spring Boot to-do list web app, built, tested, containerised and d
                                                      │
    ┌─────────────────────────────────────────────────┘
    ▼
- [1] Checkout ─▶ [2] Maven compile+package ─▶ [3] JUnit tests (13)
+ [0] Gitleaks secret scan ─▶ [1] Checkout ─▶ [2] Maven compile+package ─▶ [3] JUnit tests (13)
    ─▶ [4] docker build + tag (1.0.<run>-<sha>) ─▶ [5] push to Azure Container Registry
    ─▶ [6] Ansible playbook applies K8s manifests on AKS (rolling update)
    ─▶ [7] verify: rollout status, LoadBalancer IP, /actuator/health, /api/info == new version
@@ -25,7 +25,8 @@ A very simple Spring Boot to-do list web app, built, tested, containerised and d
 | `src/main/resources/static/index.html` | Web UI |
 | `src/test/java/...` | 7 unit tests + 6 API integration tests |
 | `Dockerfile`, `.dockerignore` | Runtime image (JRE 17 alpine, non-root user) |
-| `.github/workflows/ci-cd.yml` | CI/CD pipeline (3 jobs, 7 stages) |
+| `.github/workflows/ci-cd.yml` | CI/CD pipeline (4 jobs: secret scan, build/test, docker, deploy) |
+| `.gitleaks.toml` | Gitleaks secret-scanning rules (default rules + Azure SP secret rule) |
 | `k8s/` | Namespace, Deployment (2 replicas, probes, limits), LoadBalancer Service |
 | `ansible/` | Inventory + `deploy.yml` playbook (deploy + smoke tests) |
 | `infra/azure-setup.sh` | Creates RG, ACR, AKS, service principal (run in Azure Cloud Shell) |
@@ -34,6 +35,7 @@ A very simple Spring Boot to-do list web app, built, tested, containerised and d
 ## Run locally
 
 ```bash
+gitleaks detect --source . --config .gitleaks.toml -v   # secret scan (full history)
 mvn clean verify                 # compile + 13 tests + jar
 java -jar target/todo-app.jar    # http://localhost:8080
 docker build -t todo-app:local . && docker run -p 8080:8080 todo-app:local

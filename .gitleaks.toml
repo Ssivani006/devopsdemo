@@ -1,0 +1,25 @@
+# Gitleaks configuration - used locally and by the CI/CD pipeline.
+#   Local scan:  gitleaks detect --source . --config .gitleaks.toml -v
+title = "todo-app gitleaks config"
+
+# Start from Gitleaks' built-in rules (AWS/Azure/GitHub keys, private keys,
+# passwords, JWTs, generic API keys, ...).
+[extend]
+useDefault = true
+
+# Project-specific rule: catch an Azure service-principal JSON
+# (the kind of file "az ad sp create-for-rbac --json-auth" prints).
+[[rules]]
+id = "azure-sp-client-secret-json"
+description = "Azure service principal clientSecret in JSON"
+regex = '''"clientSecret"\s*:\s*"([^"]{20,})"'''
+secretGroup = 1
+keywords = ["clientsecret"]
+
+# Files that can never contain real secrets.
+[allowlist]
+description = "Build output and test reports"
+paths = [
+  '''target/''',
+  '''gitleaks-report\.json''',
+]

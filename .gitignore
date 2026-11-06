@@ -5,3 +5,4 @@ target/
 *.log
 .env
 azure-credentials.json
+gitleaks-report.json
