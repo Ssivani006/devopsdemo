@@ -3,8 +3,21 @@
 # (mvn clean verify -> target/todo-app.jar); Docker only packages it.
 FROM eclipse-temurin:17-jre-alpine
 
+# Build-time values; the CI/CD pipeline passes the real ones with --build-arg
+ARG BUILD_VERSION=local
+ARG GIT_COMMIT=unknown
+ARG BUILD_DATE=unknown
+
+# Image metadata (labels) - visible with: docker inspect <image>
 LABEL org.opencontainers.image.title="todo-app" \
-      org.opencontainers.image.description="Simple To-Do list (Spring Boot) for CI/CD demo"
+      org.opencontainers.image.description="Simple To-Do list (Spring Boot) for CI/CD demo" \
+      org.opencontainers.image.authors="Ssivani006" \
+      org.opencontainers.image.source="https://github.com/Ssivani006/devopsdemo" \
+      org.opencontainers.image.version="${BUILD_VERSION}" \
+      org.opencontainers.image.revision="${GIT_COMMIT}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      project="CIA 2 - Cloud CI/CD Pipeline" \
+      environment="production"
 
 WORKDIR /app
 
